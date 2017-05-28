@@ -1,0 +1,41 @@
+#!/system/bin/ash
+base=/mnt/My-space/htdocs/
+read request
+while read her
+do
+[ "${her%%: *}" == "Host" ]&&{
+HTTP_HOST="${her#*: }"
+export HTTP_HOST="${HTTP_HOST%?}"
+}
+[ "${her%%: *}" == "Cookie" ]&&export HTTP_COOKIE="${her#*: }"
+[ "$her" == "`echo -e "\r"`" ]&&break
+done
+export REMOTE_ADDR="Disabled"
+url="${request#${request%% *} }"
+url="${url% HTTP/*}"
+export QUERY_STRING="${url#*\?}"
+url="${url%%\?*}"
+[ "$url" == "/" ]&&url=/index.html
+filename="$base$url"
+[ -f "$filename" ]&&{
+[ "${url%/*}" == "/cgi-bin" ]&&{
+echo "HTTP/1.0 200 OK"
+echo "
+
+"|$filename
+echo ""
+}||{
+echo "HTTP/1.1 200 OK"
+echo "Content-Type: text/html"
+echo ""
+cat "$filename"
+echo ""
+}
+}||{
+echo  "HTTP/1.1 404 Not Found"
+echo "Content-Type: text/html"
+echo "" 
+echo "<h1>404 Not Found</h1><br>$url was not found"
+echo ""
+}
+exit
